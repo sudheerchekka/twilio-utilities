@@ -1,0 +1,32 @@
+/*this fucntion is to create a Flex task for an existing conversation using Task Router API
+Known Issue: When the task is accepted  by an agent, the agent is not added to the conversation and hence agent cannot type anything
+To fix this, you interactions APIs (simiakr to AIA flex handover)
+*/
+
+exports.handler = async function (context, event, callback) {
+  const client = context.getTwilioClient();
+
+  const taskAttributes = {
+    channelType: "web", 
+    direction: "inbound",
+    flexInteractionChannel: "chat",
+    channelSid: event.conversation_sid,
+    name: event.name,
+    from: event.name,
+    sfdcObjectId: event.sfdc_sid, //"500Hp00001rOdBBIA0"
+  };
+
+  try {
+    const task = await client.taskrouter
+      .workspaces(context.TWILIO_WORKSPACE_SID)
+      .tasks.create({
+        attributes: JSON.stringify(taskAttributes),
+        workflowSid: context.TWILIO_WORKFLOW_SID,
+        taskChannel: 'chat',
+      });
+
+    return callback(null, { status: 'success', taskSid: task.sid });
+  } catch (err) {
+    return callback(err);
+  }
+};
